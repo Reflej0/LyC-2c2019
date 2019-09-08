@@ -1,0 +1,8 @@
+DEFVAR
+   FLOAT : a1;a2
+   STRING : b1;b2
+   INT : c1;c2
+ENDDEF
+
+
+a1 := "1"

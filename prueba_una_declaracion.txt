@@ -1,0 +1,3 @@
+DEFVAR */ hola /*
+   FLOAT : a1;a2
+ENDDEF

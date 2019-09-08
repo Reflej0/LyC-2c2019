@@ -1,0 +1,7 @@
+DEFVAR
+   INT : b1
+ENDDEF
+
+
+b1 := 8+2
+

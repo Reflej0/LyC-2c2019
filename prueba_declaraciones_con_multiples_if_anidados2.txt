@@ -1,0 +1,20 @@
+DEFVAR
+   FLOAT : a1;a2
+   INT	: b1;b2
+   STRING : c1;c2;c3
+ENDDEF
+
+IF (a1 >= 2) {
+		a1 := 9
+}
+
+IF (a1 > b2) {
+		a1 := 9
+}
+
+IF (a1 > b2) {
+ b2 := 3
+	IF (a1 > b2) {
+		a1 := 9
+}
+}

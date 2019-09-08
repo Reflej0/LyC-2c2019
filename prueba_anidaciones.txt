@@ -1,0 +1,20 @@
+DEFVAR
+   FLOAT : a1;a2
+   INT	: b1;b2;b3
+   STRING : c1;c2;c3
+ENDDEF
+
+IF (a1 > b2) {
+ b2 := 3
+ b3 := "sarasa"
+  IF (a1 > b2) {
+		a1 := 9
+    WHILE(c1>c2) {
+      FOR b1 := 1 TO 5 2
+        a2 := 3
+      NEXT b1
+      a2 := 9
+      a2 := 9.2
+    }
+  }
+}

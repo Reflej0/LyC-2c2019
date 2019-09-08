@@ -1,0 +1,12 @@
+DEFVAR
+   INT : b1;b2;b3;b4
+ENDDEF
+
+
+b1 := 205
+
+IF (b1 >= b2) {
+    IF (b3 >= b4) {
+        b4 := 93
+    }
+}

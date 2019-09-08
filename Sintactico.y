@@ -1,10 +1,8 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
+#include "assembler.h"
 #include <string.h>
-#include "y.tab.h"
-#include "arbol.h"
 
 #define YYDEBUG 1
 extern int yylex();
@@ -12,281 +10,285 @@ extern int yyparse();
 extern yylineno;
 extern FILE* yyin;
 void yyerror(const char* s);
-void guardarTipoDeclaracion();
-char tipoDeclaracionIDActual[7];
-void validarDeclaracionIDs();
-void compararIdentificadores();
-void validarDeclaracionID();
-void validarTipo();
-void validarAsignacion();
+void saveIdentifierDeclarationType();
+char currentIdentifierDeclarationType[7];
+void validateIdIsDeclared();
+void compareIdentificators();
+void validateIdDeclaration();
+void validateType();
+void validateAsignation();
 
-char* recorrido[200];
-int indiceRecorrido = 0;
+char* seen[200];
+int seenIndex = 0;
+
 ast* tree;
 %}
 
-%union 
-{
-	int intVal;
-	double realVal;
-	char strVal[30];
-	struct NodoArbol* ast;
-	char* operadorLogicoAuxiliar
-}
 
-%token <strVal>ID <intVal>CTE_INT <strVal>CTE_STRING <realVal>CTE_REAL
-%token ASIG OP_SUMA OP_RESTA OP_MULT OP_DIV
-%token MENOR MAYOR IGUAL DISTINTO MENOR_IGUAL MAYOR_IGUAL
-%token CONST
-%token FILTER
-%token REPEAT UNTIL
-%token IF ELSE ENDIF
-%token P_A P_C C_A C_C
-%token GUION_BAJO
-%token COMA PUNTO_COMA DOS_PUNTOS
-%token AND OR NOT
-%token INT FLOAT STRING 
-%token VAR ENDVAR
-%token PRINT READ
 
-%left OP_SUMA
-%left OP_RESTA
-%left OP_DIV
-%left OP_MULT
-%left IGUAL
-%left DISTINTO
+
+
+%token WHILE
+%token IF
+%token FOR
+%token DEFVAR
+%token ENDDEF
+%token INT_TYPE
+%token FLOAT_TYPE
+%token STRING_TYPE
+%token NEXT
+%token TO
+%token DISPLAY
+%token GET
+%token COMMENT
+%token FLOAT_CONSTANT
+%token STRING_CONSTANT
+%token INTEGER_CONSTANT
+%token ID
+%token OPENING_PARENTHESIS
+%token CLOSING_PARENTHESIS
+%token ASSIGNMENT_OPERATOR
+%token OPENING_KEY
+%token CLOSING_KEY
+%token OPENING_SQUARE_BRACKET
+%token CLOSING_SQUARE_BRACKET
+%token SEMICOLON
+%token COLON
+%left SUM_OPERATOR
+%left MINUS_OPERATOR
+%left DIVIDE_OPERATOR
+%left MULTIPLIER_OPERATOR
+%left EQUALS_LOGIC_OPERATOR
+%left NOT_EQUALS_LOGIC_OPERATOR
 %left NOT_LOGIC_OPERATOR
-%left MAYOR
-%left MAYOR_IGUAL
-%left MENOR
-%left MENOR_IGUAL
+%left GREATER_LOGIC_OPERATOR
+%left GREATER_OR_EQUAL_LOGIC_OPERATOR
+%left LOWER_LOGIC_OPERATOR
+%left LOWER_OR_EQUAL_LOGIC_OPERATOR
 %left OR
 %left AND
+%token ENDWHILE
+%token DO
+%token IN
+%token COMMA
+%start program
 
-%start start
 
-%type <ast> start
-%type <ast> programa
-%type <ast> tipo
-%type <ast> bloque
-%type <ast> sentencia
-%type <ast> asignacion
-%type <ast> asignacion_constante
-%type <ast> condicion
-%type <ast> decision
-%type <ast> comparacion
-%type <ast> expresion
-%type <ast> iteracion
-%type <ast> termino
+%type <integer_value> INTEGER_CONSTANT
+%type <float_value> FLOAT_CONSTANT
+%type <string_value> STRING_CONSTANT
+%type <string_value> ID
+%type <string_value> INT_TYPE
+%type <string_value> STRING_TYPE
+%type <string_value> FLOAT_TYPE
+%type <ast> expression
+%type <ast> term
 %type <ast> factor
-%type <ast> salida
-%type <ast> entrada
-%type <ast> constante
-%type <ast> ASIG
-%type <intVal> INT
-%type <relVal> FLOAT
-%type <strVal> STRING
-%type <strVal> CONST
+%type <ast> assignment
+%type <ast> comparation
+%type <ast> condition
+%type <ast> get
+%type <ast> display
+%type <ast> for_loop
+%type <ast> algorithms
+%type <ast> algorithm
+%type <ast> while_loop
+%type <ast> decision
+%type <ast> sentence
+%type <ast> program
+%type <ast> while_special
+%type <ast> expression_list
+%type <auxLogicOperator> logic_operator
+%type <auxLogicOperator> logic_concatenator
+
+%union {
+  int integer_value;
+  float float_value;
+  char string_value[30];
+  struct treeNode* ast;
+  char* auxLogicOperator;
+}
+
 %%
 
-start: programa { printf("\n Regla: Compilacion Exitosa\n"); $$ = $1; tree = $$;}
-	 |			{ printf("\n El archivo 'Prueba.Txt' no tiene un programa\n"); }
-	 ;
 
-programa: declaracion bloque { printf("\n Regla: programa: declaracion bloque \n"); $$ = $2;}
-        | bloque {printf("\n Regla: programa: bloque \n");}
-		;
-		
-declaracion: VAR def_variables ENDVAR { printf("\n Regla: declaracion: VAR def_variables ENDVAR \n");}
-		   | VAR ENDVAR
-		   ;
-		   
-def_variables: def_variables def_var { printf("\n Regla: def_variables: def_variables def_var \n");}
-				| def_var {printf("\n Regla: def_variables: def_var \n");};	   
-		   
-def_var: tipo DOS_PUNTOS listavar { /*insertarIdentificadorEnTS(tipoDeclaracionIDActual);*/ printf("\n Regla: def_var: tipo DOS_PUNTOS listavar\n");}
-         ;
+program: sentence {printf("\n Regla 0: SUCCESSFUL COMPILATION\n"); $$ = $1; tree = $$;}
+  ;
 
-listavar: listavar PUNTO_COMA ID { validarDeclaracionID($3); insertar_id_en_ts($3); printf("\n Regla: listavar: listavar PUNTO_COMA ID \n");} 
-	    | ID { validarDeclaracionID($1); insertar_id_en_ts($1); printf("\n Regla: listavar: ID \n");}
-        ;
-	
-tipo: INT    { guardarTipoDeclaracion($1); printf("\n Regla: tipo: INT \n");}
-    | FLOAT  { guardarTipoDeclaracion($1); printf("\n Regla: tipo: FLOAT \n");}
-	| STRING { guardarTipoDeclaracion($1); printf("\n Regla: tipo: STRING \n");}
-	;
-		
-bloque: sentencia {$$ = $1; printf("\n Regla: bloque: sentencia \n");}
-	  | bloque sentencia {$$ = CrearNodo("BLOQUE", $1, $2); printf("\n Regla: bloque: bloque sentencia \n");}
-	  ;
-		
-sentencia: asignacion PUNTO_COMA	{ printf("\n Regla: sentencia: asignacion \n"); $$ = $1;}
-		 | iteracion  				{ printf("\n Regla: sentencia: iteracion \n"); $$ = $1;}
-		 | decision   				{ printf("\n Regla: sentencia: decision \n"); $$ = $1;}
-		 | entrada PUNTO_COMA   	{ printf("\n Regla: sentencia: entrada \n"); $$ = $1;}
-		 | salida PUNTO_COMA    	{ printf("\n Regla: sentencia: salida \n"); $$ = $1;}
-		 | asignacion_constante PUNTO_COMA 	{ printf("\n Regla: sentencia: asignacion_constante \n"); $$ = $1;}
-		 ;
-		 
-asignacion: ID ASIG expresion {validarAsignacion($1, $3);validarDeclaracionIDs($1); $$ = CrearNodo("=", CrearHoja($1), $3); printf("\n Regla: asignacion: ID ASIG expression \n");};
-		  ;
+sentence: variable_declaration_block algorithms {printf("\n Regla 1: sentence: variable_declaration_block algorithms \n"); $$ = $2;}
+  | variable_declaration_block {printf("\n Regla 2: sentence: variable_declaration_block \n");}
+  ;
 
-asignacion_constante: CONST ID ASIG constante {validarDeclaracionIDs($1); $$ = CrearNodo("=", CrearHoja($1), $3); printf("\n Regla: asignacion: ID ASIG expression \n");};
-		;
+algorithms: algorithm {$$ = $1; printf("\n Regla 3: algorithms: algorithm \n");}
+  | algorithms algorithm {$$ = newNode("CUERPO_ALGORITMH", $1, $2); printf("\n Regla 4: algorithms: algorithms algorithm \n");}
+  ;
 
-iteracion: REPEAT bloque UNTIL P_A condicion P_C
-		 ;
-		
-decision: IF P_A condicion P_C bloque ELSE bloque ENDIF
-		| IF P_A condicion P_C bloque ENDIF {$$ = CrearNodo("IF", $3, $5); printf("\n Regla: decision: IF P_A condicion P_C bloque ENDIF \n");};
-		;
+algorithm: decision {printf("\n Regla 5: algorithm: decision \n"); $$ = $1;}
+  | assignment {printf("\n Regla 6: algorithm: assignment \n"); $$ = $1;}
+  | while_loop {printf("\n Regla 7: algorithm: while_loop \n"); $$ = $1;}
+  | for_loop {printf("\n Regla 8: algorithm: for_loop \n"); $$ = $1;}
+  | display {printf("\n Regla 9: algorithm: display \n"); $$ = $1;}
+  | get {printf("\n Regla 10: algorithm: get \n"); $$ = $1;}
+  | while_special {printf("\n Regla 11: algorithm: while_special \n"); $$ = $1;}
+  ;
 
-condicion: comparacion {$$ = $1; printf("\n Regla: condicion: comparacion \n");}
-         | comparacion AND comparacion  {$$ = CrearNodo("AND", $1, $3); printf("\n Regla: condicion: comparacion AND comparacion \n");}
-		 | comparacion OR comparacion {$$ = CrearNodo("OR", $1, $3); printf("\n Regla: condicion: comparacion OR comparacion \n");}
-		 | NOT comparacion {$$ = CrearNodo("!", $2, NULL); printf("\n Regla: condicion: NOT comparacion \n");}
-		 | NOT P_A comparacion P_C {$$ = CrearNodo("!", $3, NULL); printf("\n Regla: condicion: NOT comparacion \n");}
-		 ;
+decision: IF OPENING_PARENTHESIS condition CLOSING_PARENTHESIS OPENING_KEY algorithms CLOSING_KEY {$$ = newNode("IF", $3, $6); printf("\n Regla 12: decision: IF OPENING_PARENTHESIS condition CLOSING_PARENTHESIS OPENING_KEY algorithms CLOSING_KEY \n");};
 
-comparacion: expresion MENOR expresion       { validarTipo($1, $3, 1); $$ = CrearNodo("<", $1, $3); printf("\n Regla: comparacion: expresion  MENOR  expresion \n");}
-		   | expresion MENOR_IGUAL expresion { validarTipo($1, $3, 1); $$ = CrearNodo("<=", $1, $3); printf("\n Regla: comparacion: expresion  MENOR_IGUAL  expresion \n");}
-		   | expresion MAYOR expresion       { validarTipo($1, $3, 1); $$ = CrearNodo(">", $1, $3); printf("\n Regla: comparacion: expresion  MAYOR  expresion \n");}
-		   | expresion MAYOR_IGUAL expresion { validarTipo($1, $3, 1); $$ = CrearNodo(">=", $1, $3); printf("\n Regla: comparacion: expresion  MAYOR_IGUAL  expresion \n");}
-		   | expresion IGUAL expresion       { validarTipo($1, $3, 1); $$ = CrearNodo("==", $1, $3); printf("\n Regla: comparacion: expresion  IGUAL  expresion \n");}
-		   | expresion DISTINTO expresion    { validarTipo($1, $3, 1); $$ = CrearNodo("!=", $1, $3); printf("\n Regla: comparacion: expresion  DISTINTO  expresion \n");}
-		   ; 
+assignment: ID ASSIGNMENT_OPERATOR expression {validateAsignation($1, $3);validateIdIsDeclared($1); $$ = newNode("=", newLeaf($1), $3); printf("\n Regla 13: assignment: ID ASSIGNMENT_OPERATOR expression \n");};
 
-condicion_filter: comparacion_filter
-         | comparacion_filter AND comparacion_filter 
-		 | comparacion_filter OR comparacion_filter
-		 | NOT comparacion_filter
-		 | NOT P_A comparacion_filter P_C
-		 ;
+while_loop: WHILE OPENING_PARENTHESIS condition CLOSING_PARENTHESIS OPENING_KEY algorithms CLOSING_KEY {$$ = newNode("WHILE", $3, $6); printf("\n Regla 14: while_loop: WHILE OPENING_PARENTHESIS condition CLOSING_PARENTHESIS OPENING_KEY algorithms CLOSING_KEY \n");};
 
-comparacion_filter: GUION_BAJO MENOR expresion       { printf("Filter Condicion menor OK\n"); }
-		   | GUION_BAJO MENOR_IGUAL expresion { printf("Filter Condicion menor o igual OK\n"); }
-		   | GUION_BAJO MAYOR expresion       { printf("Filter Condicion mayor OK\n"); }
-		   | GUION_BAJO MAYOR_IGUAL expresion { printf("Filter Condicion mayor o igual OK\n"); }
-		   | GUION_BAJO IGUAL expresion       { printf("Filter Condicion igual OK\n"); }
-		   | GUION_BAJO DISTINTO expresion    { printf("Filter Condicion distinto OK\n"); }                   
-		   ; 
+while_special: WHILE ID IN OPENING_SQUARE_BRACKET expression_list CLOSING_SQUARE_BRACKET DO algorithms ENDWHILE {validateIdIsDeclared($2); $$ = newNode("WHILE_SPECIAL", newNode("IN", newLeaf($2), $5), $8); printf("\n Regla 15: while_special: WHILE ID IN OPENING_SQUARE_BRACKET expression_list CLOSING_SQUARE_BRACKET DO algorithms ENDWHILE \n");}
+  ;
 
-filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C
+expression_list: expression_list COMMA expression {$$ = newNode("LIST", $1, $3); printf("\n Regla 16: expression_list: expression_list COMMA expression \n");}
+  | expression {$$ = $1; printf("\n Regla 17: expression_list: expression \n");}
+  ;
 
-filterlist: filterlist COMA ID
-			| ID
-			;
-		  
-expresion: expresion OP_SUMA termino  { validarTipo($1, $3, 1); $$ = CrearNodo("+", $1, $3); printf("\n Regla: expresion: expresion OP_SUMA termino\n");}
-		 | expresion OP_RESTA termino { validarTipo($1, $3, 1); $$ = CrearNodo("-", $1, $3); printf("\n Regla: expresion: expresion OP_RESTA termino\n");}
-		 | termino {$$ = $1; printf("\n Regla: expresion: termino\n");}
-		 ;
-	 
-termino: termino OP_MULT factor { validarTipo($1, $3, 1); $$ = CrearNodo("*", $1, $3); printf("\n Regla: termino: termino OP_MULT factor\n"); }
-	   | termino OP_DIV factor	{ validarTipo($1, $3, 1); $$ = CrearNodo("/", $1, $3); printf("\n Regla: termino: termino OP_DIV factor\n"); }
-	   | factor {$$ = $1; printf("\n Regla: termino: factor\n");}
-	   ;
-	   
-factor: ID	              { $$ = CrearHoja($1); printf("\n Regla: factor: ID \n"); }  
-	  | constante
-	  | P_A expresion P_C { $$ = $2; printf("\n Regla: factor: P_A expresion P_C \n"); }
-	  | filter 			  { printf("filter OK\n"); }
-	  ;
-	  
-constante: CTE_INT    { $$ = CrearHoja( getNombreSimbolo(&($1),1)); printf("\n Regla: factor: CTE_INT \n"); }  
-         | CTE_STRING { $$ = CrearHoja( getNombreSimbolo($1,3)); printf("\n Regla: factor: CTE_STRING \n"); }  
-		 | CTE_REAL   { $$ = CrearHoja( getNombreSimbolo(&($1),2)); printf("\n Regla: factor: CTE_REAL \n");}
-		 ;
+for_loop: FOR ID ASSIGNMENT_OPERATOR expression TO expression INTEGER_CONSTANT algorithms NEXT ID {
+    compareIdentificators($2, $10);
+    $$ = newNode("FOR", newNode("FOR_CONDITION", newNode("=", newLeaf($2), $4), newNode("TO", newLeaf($2), $6)), newNode("CUERPO_FOR", $8, newNode("NEXT", newLeaf($2), newLeaf(getSymbolName(&($7),1)))));
+    printf("\n Regla 18: for_loop: FOR ID ASSIGNMENT_OPERATOR expression TO expression INTEGER_CONSTANT algorithms NEXT ID \n");
+    }
+  | FOR ID ASSIGNMENT_OPERATOR expression TO expression algorithms NEXT ID {
+    compareIdentificators($2, $9);
+    $$ = newNode("FOR", newNode("FOR_CONDITION", newNode("=", newLeaf($2), $4), newNode("TO", newLeaf($2), $6)), newNode("CUERPO_FOR", $7, newNode("NEXT", newLeaf($2), newLeaf("_1"))));   
+    printf("\n Regla 19: for_loop: FOR ID ASSIGNMENT_OPERATOR expression TO expression algorithms NEXT ID \n");
+    }
+  ;
 
-entrada: READ ID {$$ = CrearNodo("READ", CrearHoja($2), NULL); printf("\n Regla: entrada: READ ID \n");};
-       ;
-	   
-salida: PRINT ID 			{ validarDeclaracionIDs($2); $$ = CrearNodo("PRINT", CrearHoja($2), NULL); printf("\n Regla: salida: PRINT ID \n");}
-      | PRINT CTE_REAL		{$$ = CrearNodo("PRINT",CrearHoja(getNombreSimbolo(&($2),2)), NULL); printf("\n Regla: salida: PRINT CTE_REAL \n");}
-      | PRINT CTE_INT 		{$$ = CrearNodo("PRINT",CrearHoja(getNombreSimbolo(&($2),1)), NULL); printf("\n Regla: salida: PRINT CTE_INT \n");}
-      | PRINT CTE_STRING	{$$ = CrearNodo("PRINT",CrearHoja(getNombreSimbolo(&($2),3)), NULL); printf("\n Regla: salida: PRINT CTE_STRING \n");}
-	  ;
-	  
+display: DISPLAY ID {validateIdIsDeclared($2); $$ = newNode("DISPLAY", newLeaf($2), NULL); printf("\n Regla 20: display: DISPLAY ID \n");}
+  | DISPLAY INTEGER_CONSTANT {$$ = newNode("DISPLAY",newLeaf(getSymbolName(&($2),1)), NULL); printf("\n Regla 21: display: DISPLAY INTEGER_CONSTANT \n");}
+  | DISPLAY FLOAT_CONSTANT {$$ = newNode("DISPLAY",newLeaf(getSymbolName(&($2),2)), NULL); printf("\n Regla 22: display: DISPLAY FLOAT_CONSTANT \n");}
+  | DISPLAY STRING_CONSTANT {$$ = newNode("DISPLAY",newLeaf(getSymbolName(&($2),3)), NULL); printf("\n Regla 23: display: DISPLAY STRING_CONSTANT \n");}
+  ;
+
+get: GET ID {$$ = newNode("GET", newLeaf($2), NULL); printf("\n Regla 24: get: GET ID \n");};
+
+condition: comparation {$$ = $1; printf("\n Regla 25: condition: comparation \n");}
+  | comparation logic_concatenator comparation {$$ = newNode($2, $1, $3); printf("\n Regla 26: condition: comparation logic_concatenator comparation \n");}
+  | NOT_LOGIC_OPERATOR comparation {$$ = newNode("!", $2, NULL); printf("\n Regla 27: condition: NOT_LOGIC_OPERATOR comparation \n");}
+  ;
+
+comparation: expression  logic_operator  expression {validateType($1, $3, 1); $$ = newNode($2, $1, $3); printf("\n Regla 28: comparation: expression  logic_operator  expression \n");}
+  ;
+
+logic_operator: EQUALS_LOGIC_OPERATOR {$$ = "="; printf("\n Regla 29: logic_operator: EQUALS_LOGIC_OPERATOR \n");}
+  | NOT_EQUALS_LOGIC_OPERATOR {$$ = "!="; printf("\n Regla 30: logic_operator: NOT_EQUALS_LOGIC_OPERATOR \n");}
+  | GREATER_LOGIC_OPERATOR {$$ = ">"; printf("\n Regla 31: logic_operator: GREATER_LOGIC_OPERATOR \n");}
+  | GREATER_OR_EQUAL_LOGIC_OPERATOR {$$ = ">="; printf("\n Regla 32: logic_operator: GREATER_OR_EQUAL_LOGIC_OPERATOR \n");}
+  | LOWER_LOGIC_OPERATOR {$$ = "<"; printf("\n Regla 33: logic_operator: LOWER_LOGIC_OPERATOR \n");}
+  | LOWER_OR_EQUAL_LOGIC_OPERATOR {$$ = "<="; printf("\n Regla 34: logic_operator: LOWER_OR_EQUAL_LOGIC_OPERATOR \n");}
+  ;
+
+logic_concatenator: OR {$$ = "OR"; printf("\n Regla 35: logic_concatenator: OR \n");}
+  | AND {$$ = "AND"; printf("\n Regla 36: logic_concatenator: AND \n");}
+  ;
+
+expression: expression SUM_OPERATOR term {validateType($1, $3, 1); $$ = newNode("+", $1, $3); printf("\n Regla 37: expression: expression SUM_OPERATOR term\n");}
+  | expression MINUS_OPERATOR term {validateType($1, $3, 1); $$ = newNode("-", $1, $3); printf("\n Regla 38: expression: expression MINUS_OPERATOR term\n");}
+  | term {$$ = $1; printf("\n Regla 39: expression: term\n");}
+  ;
+
+term: term MULTIPLIER_OPERATOR factor {validateType($1, $3, 1); $$ = newNode("*", $1, $3); printf("\n Regla 40: term: term MULTIPLIER_OPERATOR factor\n");}
+  | term DIVIDE_OPERATOR factor {validateType($1, $3, 1); $$ = newNode("/", $1, $3); printf("\n Regla 41: term: term DIVIDE_OPERATOR factor\n");}
+  | factor {$$ = $1; printf("\n Regla 42: term: factor\n");}
+  ;
+
+factor: ID {$$ = newLeaf($1); printf("\n Regla 43: factor: ID \n");}
+  | INTEGER_CONSTANT {$$ = newLeaf(getSymbolName(&($1),1)); printf("\n Regla 44: factor: INTEGER_CONSTANT \n");}
+  | FLOAT_CONSTANT {$$ = newLeaf(getSymbolName(&($1),2)); printf("\n Regla 45: factor: FLOAT_CONSTANT \n");}
+  | STRING_CONSTANT {$$ = newLeaf(getSymbolName($1,3)); printf("\n Regla 46: factor: STRING_CONSTANT \n");}
+  | OPENING_PARENTHESIS expression CLOSING_PARENTHESIS {$$ = $2; printf("\n Regla 47: factor: OPENING_PARENTHESIS expression CLOSING_PARENTHESIS \n");}
+  ;
+
+
+
+variable_declaration_block: DEFVAR variable_declarations ENDDEF {printf("\n Regla 48: variable_declaration_block: DEFVAR variable_declarations ENDDEF \n");}
+  ;
+
+variable_declarations: variable_declarations variable_declaration {printf("\n Regla 49: variable_declarations: variable_declarations variable_declaration \n");}
+  | variable_declaration {printf("\n Regla 50: variable_declarations: variable_declaration \n");}
+
+variable_declaration: variable_type COLON variable_list {putTypeIdentifierOnSymbolTable(currentIdentifierDeclarationType); printf("\n Regla 51: variable_declaration: variable_type COLON variable_list\n");}
+  ;
+variable_type: INT_TYPE {saveIdentifierDeclarationType($1); printf("\n Regla 52: variable_type: INT_TYPE \n");}
+  | FLOAT_TYPE {saveIdentifierDeclarationType($1); printf("\n Regla 53: variable_type: FLOAT_TYPE \n");}
+  | STRING_TYPE {saveIdentifierDeclarationType($1); printf("\n Regla 54: variable_type: STRING_TYPE \n");}
+  ;
+variable_list: variable_list SEMICOLON ID {validateIdDeclaration($3); insertIdentifier($3); printf("\n Regla 55: variable_list: variable_list SEMICOLON ID \n");} 
+  | ID {validateIdDeclaration($1); insertIdentifier($1); printf("\n Regla 56: variable_list: ID \n");}
+  ;
+
+
 %%
 
-int main(int argc, char *argv[]) 
-{
+int main(int argc, char *argv[]) {
 	yyin = fopen(argv[1], "r");
-	yydebug = 0;
-	printf("START COMPILACION\n");
-	symbolTable = NULL;
-	do 
-	{
+  yydebug = 0;
+  printf("STARTING COMPILATION\n");
+  symbolTable = NULL;
+	do {
 		yyparse();
-	} 
-	while(!feof(yyin));
-	imprimirTabla();
-	guardarTabla();
-	printf("\n --- INTERMEDIA --- \n");
-	ast treeCopy = *tree;
-	printAndSaveAST(tree);
+	} while(!feof(yyin));
+  printTable();
+  saveTable();
+  printf("\n --- INTERMEDIA --- \n");
+  ast treeCopy = *tree;
+  printAndSaveAST(tree);
+  printf("\n\n\n ASSEMBLER HERE \n\n\n");
+  generateAssembler(treeCopy);
 	return 0;
 }
-void yyerror(const char* s) 
-{
+void yyerror(const char* s) {
 	fprintf(stderr, "Parse error: %s on line %d\n", s, yylineno);
 	exit(1);
 }
 
-void guardarTipoDeclaracion(char* nombreIdentificador) 
-{
-  strcpy(tipoDeclaracionIDActual, nombreIdentificador);
+void saveIdentifierDeclarationType(char* identiferName) {
+  strcpy(currentIdentifierDeclarationType, identiferName);
 }
 
-void validarDeclaracionIDs(char* id) 
-{
-  int pos = nombre_existe_en_ts(id);
-  if (pos == -1) 
-  {
-    fprintf(stderr, "\nVariable: %s no esta declarada en el bloque de declaracion, linea: %d\n", id, yylineno);
+void validateIdIsDeclared(char* id) {
+  symbolNode* symbol = findSymbol(id);
+  if (symbol == NULL || strcmp(symbol->type, "") == 0) {
+    fprintf(stderr, "\nVariable: %s is not declared on the declaration block on line %d\n", id, yylineno);
     exit(1);
   }
 }
 
-void compararIdentificadores(char* primerIdentificador, char* segundoIdentificador) 
-{
-  if (strcmp(primerIdentificador, segundoIdentificador) != 0) 
-  {
-    fprintf(stderr, "\n Los identificadores no son iguales, linea: %d\n", yylineno);
+void compareIdentificators(char* firstIdentificator, char* secondIdentificator) {
+  if (strcmp(firstIdentificator, secondIdentificator) != 0) {
+    fprintf(stderr, "\n Identificators are not the same, line: %d\n", yylineno);
     exit(1);
   }
 }
 
-void validarDeclaracionID(char* id) 
-{
+void validateIdDeclaration(char* id) {
   int i = 0;
-  for(i = 0; i < indiceRecorrido; i++) 
-  {
-    if(strcmp(recorrido[i], id) == 0) 
-    {
-		fprintf(stderr, "\n El identificador ya se encuentra declarado, linea: %d\n", yylineno);
-		exit(1);
+  for(i = 0; i < seenIndex; i++) {
+    if(strcmp(seen[i], id) == 0) {
+      fprintf(stderr, "\n Identificator already declared, line: %d\n", yylineno);
+    exit(1);
     }
   }
-  recorrido[recorridoIndex] = strdup(id);
-  recorridoIndex++;
+  
+  seen[seenIndex] = strdup(id);
+  seenIndex++;
 }
 
-void validarTipo(ast* izquierda, ast* derecha, int fail) {
+void validateType(ast* left, ast* right, int fail) {
           
-  if(derecha->valor != NULL) 
-  {
-    NodoSimbolo* simboloIzquierdo = nombre_existe_en_ts(izquierda->valor);
-    NodoSimbolo* simboloDerecho = nombre_existe_en_ts(derecha->valor);
-    if(symbolderecha != NULL && symbolizquierda != NULL) 
-    {
+  if(right->value != NULL) {
+    symbolNode* symbolLeft = findSymbol(left->value);
+    symbolNode* symbolRight = findSymbol(right->value);
+    if(symbolRight != NULL && symbolLeft != NULL) {
       if(fail == 1 && (
-          strcmp(simboloIzquierdo->tipo, "STRING") == 0 || 
-          strcmp(simboloIzquierdo->tipo, "CTE_STRING") == 0 ||
-          strcmp(simboloDerecho->tipo, "STRING") == 0 || 
-          strcmp(simboloDerecho->tipo, "CTE_STRING") == 0)) 
-      {
-        fprintf(stderr, "\n Operacion incompatible, linea: %d\n", yylineno);
+          strcmp(symbolLeft->type, "STRING") == 0 || 
+          strcmp(symbolLeft->type, "STRING_C") == 0 ||
+          strcmp(symbolRight->type, "STRING") == 0 || 
+          strcmp(symbolRight->type, "STRING_C") == 0)) {
+        fprintf(stderr, "\n Incompatible operation, line: %d\n", yylineno);
         exit(1);
       }
     }
@@ -295,23 +297,21 @@ void validarTipo(ast* izquierda, ast* derecha, int fail) {
   
 }
 
-void validarAsignacion(char* id, ast* exp) 
-{
-   int pos = nombre_existe_en_ts(id);
-   int posExp = nombre_existe_en_ts(exp->valor);
-   struct registro_ts simbolo = tabla_simbolos[pos];
-   struct registro_ts exP = tabla_simbolos[posExp];
-   if (symbol != NULL && valorArbol != NULL) 
-   {
-	if((strcmp(simbolo.tipo, "INT") == 0 || strcmp(simbolo.tipo, "FLOAT") == 0) && (strcmp(exP.tipo, "STRING") == 0 || strcmp(exP.tipo, "CTE_STRING") == 0 )) 
-	{
-		fprintf(stderr, "\n Asignacion incompatible, linea: %d\n", yylineno);
-		exit(1);
-	}
-	if((strcmp(simbolo.tipo, "STRING") == 0) && (strcmp(exP.tipo, "INT") == 0 || strcmp(exP.tipo, "FLOAT") == 0  || strcmp(exP->tipo, "CTE_INT") == 0 || strcmp(exP->tipo, "CTE_REAL") == 0 )) 
-	{
-		fprintf(stderr, "\n Asignacion incompatible, linea: %d\n", yylineno);
-		exit(1);
-	}
+void validateAsignation(char* id, ast* exp) {
+   symbolNode* symbol = findSymbol(id);
+   symbolNode* treeValue = findSymbol(exp->value);
+   if (symbol != NULL && treeValue != NULL) {
+     if((strcmp(symbol->type, "INT") == 0 || strcmp(symbol->type, "FLOAT") == 0) && (strcmp(treeValue->type, "STRING") == 0 || strcmp(treeValue->type, "STRING_C") == 0 )) {
+       fprintf(stderr, "\n Incompatible assignment, line: %d\n", yylineno);
+       exit(1);
+     }
+
+
+     if((strcmp(symbol->type, "STRING") == 0) && (strcmp(treeValue->type, "INT") == 0 || strcmp(treeValue->type, "FLOAT") == 0  || strcmp(treeValue->type, "INTEGER_C") == 0 || strcmp(treeValue->type, "FLOAT_C") == 0 )) {
+       fprintf(stderr, "\n Incompatible assignment, line: %d\n", yylineno);
+       exit(1);
+     }
    }
 }
+
+

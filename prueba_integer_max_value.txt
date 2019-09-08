@@ -1,0 +1,7 @@
+DEFVAR
+   FLOAT : a1;a2
+   INT	: b1;b2
+   STRING : c1;c2;c3
+ENDDEF
+
+c1 := 11111111

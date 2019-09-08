@@ -1,0 +1,13 @@
+DEFVAR
+   FLOAT : a1;a2
+   INT	: b1;b2
+   STRING : c1;c2;c3
+ENDDEF
+
+
+WHILE (a1 > a2) {
+  b2 := 8
+  IF(a1 > a2) {
+    b1 := 8
+  }
+}

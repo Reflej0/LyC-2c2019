@@ -1,0 +1,13 @@
+DEFVAR
+   FLOAT : a1;a2
+   STRING : b1;b2
+   INT : c1;c2
+   STRING : b1;b2;b3
+ENDDEF
+
+
+c1 := 0b111
+c1 := 0xF3A1
+c1 := 3
+a1 := 8.2
+b1 := "HOLA"

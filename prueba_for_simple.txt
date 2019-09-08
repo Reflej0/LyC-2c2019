@@ -1,0 +1,21 @@
+DEFVAR
+   FLOAT : a1;a2;a3
+   INT	: b1;b2;b3
+   STRING : c1;c2;c3
+ENDDEF
+
+FOR b1 := 1 TO 5
+  a2 := 3
+  FOR b2 := 10 TO 11
+    a1 := 4
+  NEXT b2
+NEXT b1
+
+
+FOR b3 := 15 TO 15
+    IF (b1 >= 2) {
+	    b1 := 9
+    }
+  NEXT b3
+
+
