@@ -1,27 +1,23 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
+#include "symbol.h"
+#include "tree.h"
 #include <string.h>
-#include "y.tab.h"
 
-FILE *yyin;
-char *yytext;
-extern int yylineno;
-char tipoActual[10]={""};
-char listaVariables[10][20]={""};
-int variableActual=0;
-void reinicioVariables();
+#define YYDEBUG 1
+extern int yylex();
+extern int yyparse();
+extern yylineno;
+extern FILE* yyin;
 
+char* seen[200];
+int seenIndex = 0;
+
+ast* tree;
 %}
 
-%union {
-int intVal;
-double realVal;
-char *strVal;
-}
-
-%token <strVal>ID <intVal>CTE_INT <strVal>CTE_STRING <realVal>CTE_REAL
+%token ID CTE_INT CTE_STRING CTE_REAL
 %token ASIG OP_SUMA OP_RESTA OP_MULT OP_DIV
 %token MENOR MAYOR IGUAL DISTINTO MENOR_IGUAL MAYOR_IGUAL
 %token CONST
@@ -35,158 +31,181 @@ char *strVal;
 %token INT FLOAT STRING 
 %token VAR ENDVAR
 %token PRINT READ
+%left OP_SUMA
+%left OP_RESTA
+%left OP_DIV
+%left OP_MULT
+%left IGUAL
+%left DISTINTO
+%left MAYOR
+%left MAYOR_IGUAL
+%left MENOR
+%left MENOR_IGUAL
+%left OR
+%left AND
+%start programa
 
-%start start
+
+%type <intVal> CTE_INT
+%type <floatVal> CTE_REAL
+%type <strVal> CTE_STRING
+%type <strVal> ID
+%type <ast> expresion
+%type <ast> termino
+%type <ast> factor
+%type <ast> asignacion
+%type <ast> comparacion
+%type <ast> condicion
+%type <ast> read
+%type <ast> print
+%type <ast> bloque
+%type <ast> sentencia
+%type <ast> iteracion
+%type <ast> decision
+%type <ast> programa
+%type <ast> asignacion_constante
+%type <ast> condicion_filter
+%type <ast> comparacion_filter
+%type <ast> filter
+%type <ast> filterlist
+%type <auxLogicOperator> logic_operator
+%type <auxLogicOperator> logic_concatenator
+
+%union 
+{
+  int intVal;
+  float floatVal;
+  char strVal[30];
+  struct treeNode* ast;
+  char* auxLogicOperator;
+}
 
 %%
 
-start: programa { printf("\n\n\tCOMPILACION EXITOSA!!\n\n\n"); }
-	 |			{ printf("\n El archivo 'Prueba.Txt' no tiene un programa\n"); }
-	 ;
 
-programa: declaracion { printf("Declaracion OK\n"); } bloque
-        | bloque
-		;
-		
-declaracion: VAR def_variables ENDVAR
-		   | VAR ENDVAR
-		   ;
-		   
-def_variables: def_variables def_var { printf("\n sint: def variables\n"); };
-				| def_var;	   
-		   
-def_var: tipo DOS_PUNTOS listavar{ guardarTipos(variableActual, listaVariables, tipoActual); reinicioVariables(); }  
-         ;
+programa: sentencia_declaracion {printf("\n Regla: COMPILACION EXITOSA\n");}
+  ;
 
-listavar: listavar PUNTO_COMA ID { strcpy(listaVariables[variableActual++],$3); insertar_id_en_ts($3); }
-	    | ID { strcpy(listaVariables[variableActual++],$1); insertar_id_en_ts($1); } 
-        ;
-	
-tipo: INT    { strcpy(tipoActual,"INT"); }
-    | FLOAT  { strcpy(tipoActual,"REAL"); }
-	| STRING { strcpy(tipoActual,"STRING"); }
-	;
-		
-bloque: sentencia
-	  | bloque sentencia
-	  ;
-		
-sentencia: asignacion PUNTO_COMA	{ printf("Asignacion OK\n"); }
-		 | iteracion  				{ printf("Iteracion OK\n"); }
-		 | decision   				{ printf("Decision OK\n"); }
-		 | entrada PUNTO_COMA   	{ printf("Entrada OK\n"); }
-		 | salida PUNTO_COMA    	{ printf("Salida OK\n"); }
-		 | asignacion_constante PUNTO_COMA 	{ printf("Constante con nombre OK\n"); }
-		 ;
-		 
-asignacion: ID ASIG expresion
-		  ;
+sentencia_declaracion: bloque_declaracion_variables bloque {printf("\n Regla: sentencia: bloque_declaracion_variables bloque \n");}
+  | bloque_declaracion_variables {printf("\n Regla: sentencia: bloque_declaracion_variables \n");}
+  ;
 
-asignacion_constante: CONST ID ASIG constante {existe_cte_en_ts($2);}
-		;
+bloque_declaracion_variables: VAR declaracion_variables ENDVAR {printf("\n Regla: bloque_declaracion_variables: VAR declaracion_variables ENDVAR \n");}
+  ;
 
-iteracion: REPEAT bloque UNTIL P_A condicion P_C
-		 ;
-		
-decision: IF P_A condicion P_C bloque ELSE bloque ENDIF
-		| IF P_A condicion P_C bloque ENDIF
-		;
+declaracion_variables: declaracion_variables declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variables declaracion_variable \n");}
+  | declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variable \n");}
 
-condicion: comparacion
-         | comparacion AND comparacion 
-		 | comparacion OR comparacion
-		 | NOT comparacion
-		 | NOT P_A comparacion P_C
-		 ;
+declaracion_variable: tipo_variable DOS_PUNTOS lista_variables {printf("\n Regla: declaracion_variable: tipo_variable DOS_PUNTOS lista_variables\n");}
+  ;
+tipo_variable: INT {printf("\n Regla: tipo_variable: INT \n");}
+  | FLOAT {printf("\n Regla: tipo_variable: FLOAT \n");}
+  | STRING {printf("\n Regla: tipo_variable: STRING \n");}
+  ;
+lista_variables: lista_variables PUNTO_COMA ID {printf("\n Regla: lista_variables: lista_variables PUNTO_COMA ID \n");} 
+  | ID {printf("\n Regla: lista_variables: ID \n");}
+  ;
 
-comparacion: expresion MENOR expresion       { printf("Condicion menor OK\n"); }
-		   | expresion MENOR_IGUAL expresion { printf("Condicion menor o igual OK\n"); }
-		   | expresion MAYOR expresion       { printf("Condicion mayor OK\n"); }
-		   | expresion MAYOR_IGUAL expresion { printf("Condicion mayor o igual OK\n"); }
-		   | expresion IGUAL expresion       { printf("Condicion igual OK\n"); }
-		   | expresion DISTINTO expresion    { printf("Condicion distinto OK\n"); }                   
-		   ; 
+bloque: sentencia {printf("\n Regla: bloque: sentencia \n");}
+  | bloque sentencia {printf("\n Regla: bloque: bloque sentencia \n");}
+  ;
 
-condicion_filter: comparacion_filter
-         | comparacion_filter AND comparacion_filter 
-		 | comparacion_filter OR comparacion_filter
-		 | NOT comparacion_filter
-		 | NOT P_A comparacion_filter P_C
-		 ;
+sentencia: decision {printf("\n Regla: sentencia: decision \n");}
+  | asignacion {printf("\n Regla: sentencia: asignacion \n");}
+  | print {printf("\n Regla: sentencia: print \n");}
+  | read {printf("\n Regla: sentencia: read \n");}
+  | iteracion {printf("\n Regla: sentencia: iteracion \n");}
+  | asignacion_constante  {printf("Regla: asignacion_constante OK\n");}
+  ;
 
-comparacion_filter: GUION_BAJO MENOR expresion       { printf("Filter Condicion menor OK\n"); }
-		   | GUION_BAJO MENOR_IGUAL expresion { printf("Filter Condicion menor o igual OK\n"); }
-		   | GUION_BAJO MAYOR expresion       { printf("Filter Condicion mayor OK\n"); }
-		   | GUION_BAJO MAYOR_IGUAL expresion { printf("Filter Condicion mayor o igual OK\n"); }
-		   | GUION_BAJO IGUAL expresion       { printf("Filter Condicion igual OK\n"); }
-		   | GUION_BAJO DISTINTO expresion    { printf("Filter Condicion distinto OK\n"); }                   
-		   ; 
+decision: IF P_A condicion P_C bloque ELSE bloque ENDIF {printf("\n Regla: decision: IF P_A condicion P_C bloque ELSE bloque ENDIF \n");}
+  | IF P_A condicion P_C bloque ENDIF {printf("\n Regla: decision: IF P_A condicion P_C bloque ENDIF \n");}
+  ;
 
-filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C
+asignacion: ID ASIG expresion {printf("\n Regla: asignacion: ID ASIG expresion \n");};
 
-filterlist: filterlist COMA ID
-			| ID
-			;
-		  
-expresion: expresion OP_SUMA termino  { printf("Suma OK\n"); }
-		 | expresion OP_RESTA termino { printf("Resta OK\n"); }
-		 | termino
-		 ;
-		 
-termino: termino OP_MULT factor { printf("Multiplicacion OK\n"); }
-	   | termino OP_DIV factor	{ printf("Division OK\n"); }
-	   | factor
-	   ;
-	   
-factor: ID	              { existe_en_ts($1); printf("ID es: %s\n",yylval.strVal); }  
-	  | constante
-	  | P_A expresion P_C
-	  | filter 			  { printf("filter OK\n"); }
-	  ;
-	  
-constante: CTE_INT    { printf("ENTERO es: %d\n",yylval.intVal); }  
-         | CTE_STRING { printf("STRING es: %s\n",yylval.strVal); }  
-		 | CTE_REAL   { printf("REAL es: %.2f\n",yylval.realVal); }
-		 ;
+asignacion_constante: CONST ID ASIG expresion {printf("\n Regla: asignacion_constante: CONST ID ASIG expresion \n");};
 
-entrada: READ ID
-       ;
-	   
-salida: PRINT CTE_STRING
-      | PRINT ID 			{ existe_en_ts($2); }
-	  ;
-	  
+iteracion: REPEAT bloque UNTIL P_A condicion P_C {printf("\n Regla: iteracion: REPEAT bloque UNTIL P_A condicion P_C \n");};
+
+condicion_filter: comparacion_filter { printf("\n Regla: condicion_filter: comparacion_filter \n");}
+  | comparacion_filter logic_concatenator comparacion_filter {printf("\n Regla: condicion_filter: comparacion_filter logic_concatenator comparacion_filter \n");}
+  | NOT P_A comparacion_filter P_C {printf("\n Regla: condicion_filter: NOT comparacion_filter \n");}
+  ;
+
+comparacion_filter: GUION_BAJO logic_operator  expresion {printf("\n Regla: comparacion_filter: expresion  logic_operator  expresion \n");}
+  ;
+
+filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C {printf("\n Regla: filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C \n");}
+  ;
+
+filterlist: filterlist COMA ID {printf("\n Regla: filterlist: filterlist COMA ID \n");}
+      | ID {printf("\n Regla: filterlist: ID \n");}
+      ;
+
+print: PRINT ID {printf("\n Regla: print: PRINT ID \n");}
+  | PRINT CTE_INT {printf("\n Regla: print: PRINT CTE_INT \n");}
+  | PRINT CTE_REAL {printf("\n Regla: print: PRINT CTE_REAL \n");}
+  | PRINT CTE_STRING {printf("\n Regla: print: PRINT CTE_STRING \n");}
+  ;
+
+read: READ ID {printf("\n Regla: read: READ ID \n");};
+
+condicion: comparacion {printf("\n Regla: condicion: comparacion \n");}
+  | comparacion logic_concatenator comparacion {printf("\n Regla: condicion: comparacion logic_concatenator comparacion \n");}
+  | NOT P_A comparacion P_C {printf("\n Regla: condicion: NOT comparacion \n");}
+  ;
+
+comparacion: expresion  logic_operator  expresion {printf("\n Regla: comparacion: expresion  logic_operator  expresion \n");}
+  ;
+
+logic_operator: IGUAL {printf("\n Regla: logic_operator: IGUAL \n");}
+  | DISTINTO {printf("\n Regla: logic_operator: DISTINTO \n");}
+  | MAYOR {printf("\n Regla: logic_operator: MAYOR \n");}
+  | MAYOR_IGUAL {printf("\n Regla: logic_operator: MAYOR_IGUAL \n");}
+  | MENOR {printf("\n Regla: logic_operator: MENOR \n");}
+  | MENOR_IGUAL {printf("\n Regla: logic_operator: MENOR_IGUAL \n");}
+  ;
+
+logic_concatenator: OR {printf("\n Regla: logic_concatenator: OR \n");}
+  | AND {printf("\n Regla: logic_concatenator: AND \n");}
+  ;
+
+expresion: expresion OP_SUMA termino {printf("\n Regla: expresion: expresion OP_SUMA termino\n");}
+  | expresion OP_RESTA termino { printf("\n Regla: expresion: expresion OP_RESTA termino\n");}
+  | termino {printf("\n Regla: expresion: termino\n");}
+  ;
+
+termino: termino OP_MULT factor {printf("\n Regla: termino: termino OP_MULT factor\n");}
+  | termino OP_DIV factor {printf("\n Regla: termino: termino OP_DIV factor\n");}
+  | factor {printf("\n Regla: termino: factor\n");}
+  ;
+
+factor: ID {printf("\n Regla: factor: ID \n");}
+  | CTE_INT {printf("\n Regla: factor: CTE_INT \n");}
+  | CTE_REAL { printf("\n Regla: factor: CTE_REAL \n");}
+  | CTE_STRING {printf("\n Regla: factor: CTE_STRING \n");}
+  | P_A expresion P_C {printf("\n Regla: factor: P_A expresion P_C \n");}
+  | filter { printf("filter OK\n"); }
+  ;
+
+
 %%
 
-int main(int argc,char *argv[])
+int main(int argc, char *argv[]) 
 {
-  
-  if ((yyin = fopen(argv[1], "rt")) == NULL)
+	yyin = fopen(argv[1], "r");
+  yydebug = 0;
+  printf("COMENZANDO COMPILACION\n");
+  symbolTable = NULL;
+	do 
   {
-	printf("\nNo se puede abrir el archivo: %s\n", argv[1]);
-  }
-  else
-  {
-	yyparse();
-	//mostrar_ts();
-	save_reg_ts();
-	printf("Listo TS\n");
-  }
-  fclose(yyin);
-  return 0;
-}
-
-int yyerror(char *errMessage)
-{
-   printf("(!) ERROR en la linea %d: %s\n",yylineno,errMessage);
-   fprintf(stderr, "Fin de ejecucion.\n");
-   system ("Pause");
-   exit (1);
-}
-
-void reinicioVariables() {
-	variableActual=0;
-    strcpy(tipoActual,"");
+		yyparse();
+	} 
+  while(!feof(yyin));
+  printTable();
+  saveTable();
+	return 0;
 }
 
 
