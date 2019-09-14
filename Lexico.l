@@ -90,10 +90,10 @@ FILTER			[Ff][Ii][Ll][Tt][Ee][Rr]
 {FLOAT} {strcpy(yylval.strVal, yytext); return FLOAT;}
 {INT} strcpy(yylval.strVal, yytext); {return INT;}
 {STRING} {strcpy(yylval.strVal, yytext); return STRING;}
-{CTE_INT} {checkIntegerConstantLimits(); yylval.intVal = atoi(substringIfNeeded()); insert(yytext); return CTE_INT;}
-{CTE_STRING} {checkStringConstantLimits(); strcpy(yylval.strVal, yytext); insert(yytext); return CTE_STRING;}
-{CTE_REAL} {checkFloatConstantLimits(); yylval.floatVal = atof(yytext); insert(yytext); return CTE_REAL;}
-{ID} {strcpy(yylval.strVal, yytext); insert(yytext); return ID;}
+{CTE_INT} {validarLimitesConstanteInt(); yylval.intVal = atoi(substringIfNeeded()); insert(yytext); return CTE_INT;}
+{CTE_STRING} {validarLimitesConstanteString(); strcpy(yylval.strVal, yytext); insert(yytext); return CTE_STRING;}
+{CTE_REAL} {validarLimitesConstanteReal(); yylval.floatVal = atof(yytext); insert(yytext); return CTE_REAL;}
+{ID} {strcpy(yylval.strVal, yytext); validarID(); insert(yytext); return ID;}
 " "
 "\t"
 "\n"		    
@@ -103,7 +103,7 @@ FILTER			[Ff][Ii][Ll][Tt][Ee][Rr]
 %%
 
 
-void checkStringConstantLimits() 
+void validarLimitesConstanteString() 
 {
   if (yyleng > 30) 
   {
@@ -112,7 +112,7 @@ void checkStringConstantLimits()
   }
 }
 
-void checkFloatConstantLimits() 
+void validarLimitesConstanteReal() 
 {
   if (atof(yytext) > FLT_MAX || yyleng > 39) 
   {
@@ -122,7 +122,7 @@ void checkFloatConstantLimits()
 }
 
 
-void checkIntegerConstantLimits() 
+void validarLimitesConstanteInt() 
 {
   if (atoi(yytext) > 32767) 
   {
@@ -131,6 +131,15 @@ void checkIntegerConstantLimits()
   }
 }
 
+void validarID(){
+  if (yyleng > 10) 
+  {
+    printf("Longitud maxima excedida en linea %d\n", yylineno);
+    fprintf(stderr, "Fin de ejecucion.\n");
+    system ("Pause");
+    exit (1);
+  }
+}
 
 char* substringIfNeeded() 
 {
