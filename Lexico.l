@@ -4,9 +4,10 @@
   #include "y.tab.h"
   #include <string.h>
 
-  void checkStringConstantLimits();
-  void checkFloatConstantLimits();
-  void checkIntegerConstantLimits();
+  void validarLimitesConstanteString();
+  void validarLimitesConstanteReal();
+  void validarLimitesConstanteInt();
+  void validarID();
   char* substringIfNeeded();
 %}
 %option noyywrap
@@ -131,7 +132,8 @@ void validarLimitesConstanteInt()
   }
 }
 
-void validarID(){
+void validarID()
+{
   if (yyleng > 10) 
   {
     printf("Longitud maxima excedida en linea %d\n", yylineno);
@@ -163,6 +165,7 @@ char* substringIfNeeded()
   return yyTextCopy;
 }
 
-void yyerror (char const *s) {
+void yyerror (char const *s) 
+{
    fprintf (stderr, "%s\n", s);
  }
