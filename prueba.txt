@@ -1,0 +1,32 @@
+VAR
+	FLOAT : a1; b1
+	STRING: variable1
+	INT : a;b;c;d;r
+ENDVAR
+
+--/soy un comentario/--
+
+b = 123
+c = 666
+a = b
+CONST variable1 = "asd"
+variable1 = "asd"
+a1 = .9999
+b1 = 99.
+
+READ d
+CONST variable1 = "dsa"
+PRINT "5"
+
+IF ( a < (a*3) )
+    IF (a == 5 AND a > c)
+        a = a + FILTER ( _>(4 + r) and _<=6.5 , [a,b,c,d])
+    ENDIF
+ELSE
+   a = a - 5
+ENDIF
+a = a + FILTER ( _>(4 + r) and _<=6.5 , [a,b,c,d])
+
+IF (NOT((3) > 4))
+	c = "666"
+ENDIF
