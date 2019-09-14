@@ -64,9 +64,9 @@ IF (NOT((3) > 4))
 	c = "666"
 ENDIF
 
-REPEAT (a == 2.3 OR 1==1)
+REPEAT 
     b = (5 / a - 2) + 1 
-UNTIL
+UNTIL (a == 2.3 OR 1==1)
 
 c = FILTER ( _<=6.5 , [a,b,c,d])
 CONST variable2 = 45
