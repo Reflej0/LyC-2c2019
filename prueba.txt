@@ -1,7 +1,7 @@
 VAR
-	FLOAT : a1; b1
-	STRING: variable1
-	INT : a;b;c;d;r
+	FLOAT, INT : a1; b1
+	STRING, STRING: var1
+	INT, INT, INT, INT, INT, STRING : a;b;c;d;r
 ENDVAR
 
 --/soy un comentario/--
@@ -9,13 +9,13 @@ ENDVAR
 b = 123
 c = 666
 a = b
-CONST variable1 = "asd"
-variable1 = "asd"
+CONST var1 = "asd"
+var1 = "asd"
 a1 = .9999
 b1 = 99.
 
 READ d
-CONST variable1 = "dsa"
+CONST var1 = "dsa"
 PRINT "5"
 
 IF ( a < (a*3) )
@@ -36,4 +36,4 @@ REPEAT
 UNTIL (a == 2.3 OR 1==1)
 
 c = FILTER ( _<=6.5 , [a,b,c,d])
-CONST variable2 = 45
+CONST var2 = 45

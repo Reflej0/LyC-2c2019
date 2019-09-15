@@ -10,8 +10,8 @@ extern int yyparse();
 extern yylineno;
 extern FILE* yyin;
 
-char* seen[200];
-int seenIndex = 0;
+int tipos_variables = 0;
+int variables = 0;
 %}
 
 %token ID CTE_INT CTE_STRING CTE_REAL
@@ -72,14 +72,20 @@ bloque_declaracion_variables: VAR declaracion_variables ENDVAR {printf("\n Regla
 declaracion_variables: declaracion_variables declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variables declaracion_variable \n");}
   | declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variable \n");}
 
-declaracion_variable: tipo_variable DOS_PUNTOS lista_variables {printf("\n Regla: declaracion_variable: tipo_variable DOS_PUNTOS lista_variables\n");}
+declaracion_variable: lista_tipos_variable DOS_PUNTOS lista_variables {printf("\n Regla: declaracion_variable: tipo_variable DOS_PUNTOS lista_variables\n"); 
+	if(tipos_variables>variables){/*Mas tipos que variables*/}
+	else if(tipos_variables<variables){/*Mas variables que tipos*/}}
   ;
+
+lista_tipos_variable: lista_tipos_variable COMA tipo_variable {printf("\n lista_tipos_variable: lista_tipos_variable COMA tipo_variable \n"); tipos_variables++;}
+  | tipo_variable {printf("\n lista_tipos_variable: tipo_variable \n"); tipos_variables++;};
+
 tipo_variable: INT {printf("\n Regla: tipo_variable: INT \n");}
   | FLOAT {printf("\n Regla: tipo_variable: FLOAT \n");}
   | STRING {printf("\n Regla: tipo_variable: STRING \n");}
   ;
-lista_variables: lista_variables PUNTO_COMA ID {printf("\n Regla: lista_variables: lista_variables PUNTO_COMA ID \n");} 
-  | ID {printf("\n Regla: lista_variables: ID \n");}
+lista_variables: lista_variables PUNTO_COMA ID {printf("\n Regla: lista_variables: lista_variables PUNTO_COMA ID \n"); variables++;} 
+  | ID {printf("\n Regla: lista_variables: ID \n"); variables++;}
   ;
 
 bloque: sentencia {printf("\n Regla: bloque: sentencia \n");}
