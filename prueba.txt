@@ -11,8 +11,8 @@ c = 666
 a = b
 CONST var1 = "asd"
 var1 = "asd"
-a1 = .9999
-b1 = 99.
+a1 = 1.99
+b1 = 99.2
 
 READ d
 CONST var1 = "dsa"

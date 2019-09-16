@@ -70,7 +70,7 @@ symbolNode* insert(char* value) {
     char* valueToInsert = (char*) malloc(len+1);
     strcpy(valueToInsert, value);
     
-    // Is it a string constant?
+
     int isConstant = 0;
     int shouldApplyBase2Transformation = 0;
     int shouldApplyBase16Transformation = 0;
@@ -79,14 +79,10 @@ symbolNode* insert(char* value) {
         node->length = strlen(valueToInsert);
         isConstant = 1;
         strcpy(node->type, "STRING_C");
-        //node->type = "STRING_C";
-        // Is it a float constant?
     } else if (strchr(valueToInsert, '.') != NULL) {
         isConstant = 1;
-        strcpy(node->type, "FLOAT_C");
+        strcpy(node->type, "FLOATT_C");
 
-        //node->type = "FLOAT_C";
-        // Is it a integer constant?
     } else if (isdigit(valueToInsert[0]) != 0) {
         isConstant = 1;
         strcpy(node->type, "INTEGER_C");
@@ -111,7 +107,6 @@ symbolNode* insert(char* value) {
     }
 
     if(shouldApplyBase2Transformation == 1) {
-        // TODO: Refactor this, extract behaviour into function..
         char* literalValue = substring(valueToInsert, 3, strlen(valueToInsert));
         int transformedValue = (int) strtol(literalValue, NULL, 2);
         itoa(transformedValue, valueToInsert, 10);
@@ -121,7 +116,6 @@ symbolNode* insert(char* value) {
         itoa(transformedValue, valueToInsert, 10);
     }
     if (isConstant == 1) {
-        //node->value = valueToInsert;
         strcpy(node->value, valueToInsert);
     }
 
