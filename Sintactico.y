@@ -63,10 +63,10 @@ int recorrerTiposVariablesAux = 0;
 %%
 
 
-programa: sentencia_declaracion {printf("\n Regla: COMPILACION EXITOSA\n"); cleanWithoutType();}
+programa: sentencia_declaracion {printf("\n Regla: COMPILACION EXITOSA\n");}
   ;
 
-sentencia_declaracion: bloque_declaracion_variables bloque {printf("\n Regla: sentencia: bloque_declaracion_variables bloque \n");}
+sentencia_declaracion: bloque_declaracion_variables bloque {printf("\n Regla: sentencia: bloque_declaracion_variables bloque \n"); cleanWithoutType();}
   | bloque_declaracion_variables {printf("\n Regla: sentencia: bloque_declaracion_variables \n");}
   ;
 
