@@ -1,4 +1,8 @@
 NOMBRE	TIPODATO	VALOR	LONGITUD
+_45	INTEGER_C	45	0
+_2.3	FLOAT_C	2.3	0
+_1	INTEGER_C	1	0
+_2	INTEGER_C	2	0
 _666	STRING_C	666	3
 _6.5	FLOAT_C	6.5	0
 _4	INTEGER_C	4	0
@@ -16,6 +20,6 @@ d			0
 c			0
 b			0
 a			0
-variable1			0
+var1			0
 b1			0
 a1			0

@@ -72,7 +72,7 @@ bloque_declaracion_variables: VAR declaracion_variables ENDVAR {printf("\n Regla
 declaracion_variables: declaracion_variables declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variables declaracion_variable \n");}
   | declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variable \n");}
 
-declaracion_variable: lista_tipos_variable DOS_PUNTOS lista_variables {printf("\n Regla: declaracion_variable: tipo_variable DOS_PUNTOS lista_variables\n"); 
+declaracion_variable: C_A lista_tipos_variable C_C DOS_PUNTOS C_A lista_variables C_C {printf("\n Regla: declaracion_variable: C_A lista_tipo_variable C_C DOS_PUNTOS C_A lista_variables C_C\n"); 
 	if(tipos_variables>variables){/*Mas tipos que variables*/}
 	else if(tipos_variables<variables){/*Mas variables que tipos*/}}
   ;
@@ -84,7 +84,7 @@ tipo_variable: INT {printf("\n Regla: tipo_variable: INT \n");}
   | FLOAT {printf("\n Regla: tipo_variable: FLOAT \n");}
   | STRING {printf("\n Regla: tipo_variable: STRING \n");}
   ;
-lista_variables: lista_variables PUNTO_COMA ID {printf("\n Regla: lista_variables: lista_variables PUNTO_COMA ID \n"); variables++;} 
+lista_variables: lista_variables COMA ID {printf("\n Regla: lista_variables: lista_variables COMA ID \n"); variables++;} 
   | ID {printf("\n Regla: lista_variables: ID \n"); variables++;}
   ;
 
