@@ -87,7 +87,7 @@ tipo_variable: INT {printf("\n Regla: tipo_variable: INT \n"); strcpy(tiposVaria
   | STRING {printf("\n Regla: tipo_variable: STRING \n"); strcpy(tiposVariablesAux[recorrerTiposVariablesAux], "STRING"); recorrerTiposVariablesAux++;}
   ;
 lista_variables: lista_variables COMA ID {printf("\n Regla: lista_variables: lista_variables COMA ID \n"); auxx = findSymbol($3); strcpy(auxx->type, tiposVariablesAux[variables]); variables++;} 
-  | ID {printf("\n Regla: lista_variables: ID %s-%d \n", $1, variables); auxx = findSymbol($1); strcpy(auxx->type, tiposVariablesAux[variables]); variables++;}
+  | ID {printf("\n Regla: lista_variables: ID \n", $1, variables); auxx = findSymbol($1); strcpy(auxx->type, tiposVariablesAux[variables]); variables++;}
   ;
 
 bloque: sentencia {printf("\n Regla: bloque: sentencia \n");}
