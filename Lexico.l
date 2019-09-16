@@ -9,7 +9,6 @@
   void validarLimitesConstanteInt();
   void validarID();
   char* substringIfNeeded();
-  int cantTipos = 0;
 
 %}
 %option noyywrap
@@ -86,13 +85,13 @@ FILTER			[Ff][Ii][Ll][Tt][Ee][Rr]
 "=="            { return IGUAL; }
 "!="            { return DISTINTO; }
 
-{FLOAT} {strcpy(yylval.strVal, yytext); cantTipos++ ;return FLOAT;}
-{INT} {strcpy(yylval.strVal, yytext); cantTipos++; return INT;}
-{STRING} {strcpy(yylval.strVal, yytext); cantTipos++; return STRING;}
+{FLOAT} {strcpy(yylval.strVal, yytext);return FLOAT;}
+{INT} {strcpy(yylval.strVal, yytext); return INT;}
+{STRING} {strcpy(yylval.strVal, yytext); return STRING;}
 {CTE_INT} {validarLimitesConstanteInt(); yylval.intVal = atoi(substringIfNeeded()); insert(yytext); return CTE_INT;}
 {CTE_STRING} {validarLimitesConstanteString(); strcpy(yylval.strVal, yytext); insert(yytext); return CTE_STRING;}
 {CTE_REAL} {validarLimitesConstanteReal(); yylval.floatVal = atof(yytext); insert(yytext); return CTE_REAL;}
-{ID} {strcpy(yylval.strVal, yytext); validarID(); if(cantTipos > 0){insert(yytext);};cantTipos--; return ID;}
+{ID} {strcpy(yylval.strVal, yytext); validarID(); insert(yytext); return ID;}
 " "
 "\t"
 "\n"		    

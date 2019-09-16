@@ -1,4 +1,6 @@
 VAR
+	[FLOAT, INT]:[c1, e1]
+	[STRING, STRING]:[z]
 	[FLOAT, INT, STRING, INT, INT, INT, INT, INT]:[a1, b1, var1, a, b, c, d, r, m]
 ENDVAR
 

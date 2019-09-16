@@ -12,6 +12,10 @@ extern FILE* yyin;
 
 int tipos_variables = 0;
 int variables = 0;
+symbolNode* comprobarTipoEnteroFilter;
+symbolNode* auxx;
+char tiposVariablesAux[20][20];
+int recorrerTiposVariablesAux = 0;
 %}
 
 %token ID CTE_INT CTE_STRING CTE_REAL
@@ -59,7 +63,7 @@ int variables = 0;
 %%
 
 
-programa: sentencia_declaracion {printf("\n Regla: COMPILACION EXITOSA\n");}
+programa: sentencia_declaracion {printf("\n Regla: COMPILACION EXITOSA\n"); cleanWithoutType();}
   ;
 
 sentencia_declaracion: bloque_declaracion_variables bloque {printf("\n Regla: sentencia: bloque_declaracion_variables bloque \n");}
@@ -72,20 +76,18 @@ bloque_declaracion_variables: VAR declaracion_variables ENDVAR {printf("\n Regla
 declaracion_variables: declaracion_variables declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variables declaracion_variable \n");}
   | declaracion_variable {printf("\n Regla: declaracion_variables: declaracion_variable \n");}
 
-declaracion_variable: C_A lista_tipos_variable C_C DOS_PUNTOS C_A lista_variables C_C {printf("\n Regla: declaracion_variable: C_A lista_tipo_variable C_C DOS_PUNTOS C_A lista_variables C_C\n"); 
-	if(tipos_variables>variables){/*Mas tipos que variables*/}
-	else if(tipos_variables<variables){/*Mas variables que tipos*/}}
+declaracion_variable: C_A lista_tipos_variable C_C DOS_PUNTOS C_A lista_variables C_C {printf("\n Regla: declaracion_variable: C_A lista_tipo_variable C_C DOS_PUNTOS C_A lista_variables C_C\n"); recorrerTiposVariablesAux=0; variables=0; tipos_variables=0;}
   ;
 
 lista_tipos_variable: lista_tipos_variable COMA tipo_variable {printf("\n lista_tipos_variable: lista_tipos_variable COMA tipo_variable \n"); tipos_variables++;}
   | tipo_variable {printf("\n lista_tipos_variable: tipo_variable \n"); tipos_variables++;};
 
-tipo_variable: INT {printf("\n Regla: tipo_variable: INT \n");}
-  | FLOAT {printf("\n Regla: tipo_variable: FLOAT \n");}
-  | STRING {printf("\n Regla: tipo_variable: STRING \n");}
+tipo_variable: INT {printf("\n Regla: tipo_variable: INT \n"); strcpy(tiposVariablesAux[recorrerTiposVariablesAux], "INT"); recorrerTiposVariablesAux++;}
+  | FLOAT {printf("\n Regla: tipo_variable: FLOAT \n"); strcpy(tiposVariablesAux[recorrerTiposVariablesAux], "FLOAT"); recorrerTiposVariablesAux++;}
+  | STRING {printf("\n Regla: tipo_variable: STRING \n"); strcpy(tiposVariablesAux[recorrerTiposVariablesAux], "STRING"); recorrerTiposVariablesAux++;}
   ;
-lista_variables: lista_variables COMA ID {printf("\n Regla: lista_variables: lista_variables COMA ID \n"); variables++;} 
-  | ID {printf("\n Regla: lista_variables: ID \n"); variables++;}
+lista_variables: lista_variables COMA ID {printf("\n Regla: lista_variables: lista_variables COMA ID \n"); auxx = findSymbol($3); strcpy(auxx->type, tiposVariablesAux[variables]); variables++;} 
+  | ID {printf("\n Regla: lista_variables: ID %s-%d \n", $1, variables); auxx = findSymbol($1); strcpy(auxx->type, tiposVariablesAux[variables]); variables++;}
   ;
 
 bloque: sentencia {printf("\n Regla: bloque: sentencia \n");}
@@ -122,7 +124,7 @@ filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C {printf("\n Regl
   ;
 
 filterlist: filterlist COMA ID {printf("\n Regla: filterlist: filterlist COMA ID \n");}
-      | ID {printf("\n Regla: filterlist: ID \n");}
+      | ID {printf("\n Regla: filterlist: ID \n"); comprobarTipoEnteroFilter = findSymbol($1); if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}}
       ;
 
 print: PRINT ID {printf("\n Regla: print: PRINT ID \n");}

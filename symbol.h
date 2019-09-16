@@ -37,10 +37,27 @@ identifierNode* identifierList;
 identifierNode* insertIdentifier();
 identifierNode* findIdentifier();
 void clearIdentifierList();
+symbolNode* cleanWithoutType();
 
 
 void displayAlreadyDeclaredErrorFor();
 
+//Fix
+symbolNode* cleanWithoutType() 
+{
+    symbolNode* tableNode = symbolTable;
+    while(tableNode != NULL)
+    {
+        //Si meti a la TS una variable que no tiene tipo, es porque no debi haber metido esto pasa por la forma de declarar nueva de variables.
+        if (tableNode->next != NULL && strlen(tableNode->next->type)==0)
+        {
+            symbolNode* elim = tableNode->next;
+            tableNode->next = elim->next;
+            free(elim);
+        }
+        tableNode = tableNode->next;
+    }
+}
 
 symbolNode* insert(char* value) {
     symbolNode* foundNode = findSymbol(value);
