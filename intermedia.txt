@@ -1,0 +1,1 @@
+b = _123 BLOQUE c = _666 BLOQUE a = b BLOQUE var1 = _asd BLOQUE a1 = _1.99 BLOQUE b1 = _99.2 BLOQUE d READ BLOQUE _5 PRINT BLOQUE _3 > _4 ! IF c = _666 BLOQUE a = _2.3 OR _1 = _1 REPEAT b = a BLOQUE a < a * _3 IF a = b AND a > c IF a = a + b 
