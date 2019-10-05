@@ -36,10 +36,10 @@ identifierNode* identifierList;
 identifierNode* insertIdentifier();
 identifierNode* findIdentifier();
 void clearIdentifierList();
-symbolNode* cleanWithoutType();
+symbolNode* limpiarSinTipo();
 
 //Fix
-symbolNode* cleanWithoutType() 
+symbolNode* limpiarSinTipo() 
 {
     symbolNode* tableNode = symbolTable;
     while(tableNode != NULL)

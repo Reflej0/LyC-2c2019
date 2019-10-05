@@ -17,9 +17,10 @@ symbolNode* comprobarTipoEnteroFilter;
 symbolNode* auxx;
 char tiposVariablesAux[20][20];
 int recorrerTiposVariablesAux = 0;
-void validateIdIsDeclared();
-void validateType();
-void validateAsignation();
+void validarDeclaracionId();
+void validarTipo();
+void validarAsignacion();
+void asignacionConstante();
 
 char* seen[200];
 int seenIndex = 0;
@@ -102,7 +103,7 @@ ast* tree;
 programa: sentencia_declaracion {printf("\n Regla: COMPILACION EXITOSA\n"); $$ = $1; tree = $$;}
   ;
 
-sentencia_declaracion: bloque_declaracion_variables bloque {printf("\n Regla: sentencia: bloque_declaracion_variables bloque \n"); cleanWithoutType(); $$ = $2;}
+sentencia_declaracion: bloque_declaracion_variables bloque {printf("\n Regla: sentencia: bloque_declaracion_variables bloque \n"); limpiarSinTipo(); $$ = $2;}
   | bloque_declaracion_variables {printf("\n Regla: sentencia: bloque_declaracion_variables \n");}
   ;
 
@@ -138,13 +139,13 @@ sentencia: decision {$$ = $1; printf("\n Regla: sentencia: decision \n");}
   | asignacion_constante  {$$ = $1; printf("Regla: asignacion_constante OK\n");}
   ;
 
-decision: IF P_A condicion P_C bloque ELSE bloque ENDIF {printf("\n Regla: decision: IF P_A condicion P_C bloque ELSE bloque ENDIF \n");}
+decision: IF P_A condicion P_C bloque ELSE bloque ENDIF {$$ = newNode("IF", $3, newNode("CUERPO_IF_ELSE", $5, $7)); printf("\n Regla: decision: IF P_A condicion P_C bloque ELSE bloque ENDIF \n");}
   | IF P_A condicion P_C bloque ENDIF {$$ = newNode("IF", $3, $5); printf("\n Regla: decision: IF P_A condicion P_C bloque ENDIF \n");}
   ;
 
-asignacion: ID ASIG expresion {validateAsignation($1, $3);validateIdIsDeclared($1); $$ = newNode("=", newLeaf($1), $3); printf("\n Regla: asignacion: ID ASIG expresion \n");};
+asignacion: ID ASIG expresion {validarAsignacion($1, $3);validarDeclaracionId($1); $$ = newNode("=", newLeaf($1), $3); printf("\n Regla: asignacion: ID ASIG expresion \n");};
 
-asignacion_constante: CONST ID ASIG expresion {printf("\n Regla: asignacion_constante: CONST ID ASIG expresion \n");};
+asignacion_constante: CONST ID ASIG expresion {asignacionConstante($2, $4); $$ = newNode("=", newLeaf($2), $4); printf("\n Regla: asignacion_constante: CONST ID ASIG expresion \n");};
 
 iteracion: REPEAT bloque UNTIL P_A condicion P_C {$$ = newNode("REPEAT", $5, $2); printf("\n Regla: iteracion: REPEAT bloque UNTIL P_A condicion P_C \n");};
 
@@ -163,7 +164,7 @@ filterlist: filterlist COMA ID {printf("\n Regla: filterlist: filterlist COMA ID
       | ID {printf("\n Regla: filterlist: ID \n"); comprobarTipoEnteroFilter = findSymbol($1); if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}}
       ;
 
-print: PRINT ID {validateIdIsDeclared($2); $$ = newNode("PRINT", newLeaf($2), NULL); printf("\n Regla: print: PRINT ID \n");}
+print: PRINT ID {validarDeclaracionId($2); $$ = newNode("PRINT", newLeaf($2), NULL); printf("\n Regla: print: PRINT ID \n");}
   | PRINT CTE_INT {$$ = newNode("PRINT",newLeaf(getSymbolName(&($2),1)), NULL); printf("\n Regla: print: PRINT CTE_INT \n");}
   | PRINT CTE_REAL {$$ = newNode("PRINT",newLeaf(getSymbolName(&($2),2)), NULL); printf("\n Regla: print: PRINT CTE_REAL \n");}
   | PRINT CTE_STRING {$$ = newNode("PRINT",newLeaf(getSymbolName(&($2),3)), NULL); printf("\n Regla: print: PRINT CTE_STRING \n");}
@@ -176,7 +177,7 @@ condicion: comparacion {$$ = $1; printf("\n Regla: condicion: comparacion \n");}
   | NOT P_A comparacion P_C {$$ = newNode("!", $3, NULL); printf("\n Regla: condicion: NOT comparacion \n");}
   ;
 
-comparacion: expresion  logic_operator  expresion {validateType($1, $3, 1); $$ = newNode($2, $1, $3); printf("\n Regla: comparacion: expresion  logic_operator  expresion \n");}
+comparacion: expresion  logic_operator  expresion {validarTipo($1, $3, 1); $$ = newNode($2, $1, $3); printf("\n Regla: comparacion: expresion  logic_operator  expresion \n");}
   ;
 
 logic_operator: IGUAL {$$ = "="; printf("\n Regla: logic_operator: IGUAL \n");}
@@ -191,13 +192,13 @@ logic_concatenator: OR {$$ = "OR"; printf("\n Regla: logic_concatenator: OR \n")
   | AND {$$ = "AND"; printf("\n Regla: logic_concatenator: AND \n");}
   ;
 
-expresion: expresion OP_SUMA termino {validateType($1, $3, 1); $$ = newNode("+", $1, $3); printf("\n Regla: expresion: expresion OP_SUMA termino\n");}
-  | expresion OP_RESTA termino {validateType($1, $3, 1); $$ = newNode("-", $1, $3); printf("\n Regla: expresion: expresion OP_RESTA termino\n");}
+expresion: expresion OP_SUMA termino {validarTipo($1, $3, 1); $$ = newNode("+", $1, $3); printf("\n Regla: expresion: expresion OP_SUMA termino\n");}
+  | expresion OP_RESTA termino {validarTipo($1, $3, 1); $$ = newNode("-", $1, $3); printf("\n Regla: expresion: expresion OP_RESTA termino\n");}
   | termino {$$ = $1; printf("\n Regla: expresion: termino\n");}
   ;
 
-termino: termino OP_MULT factor {validateType($1, $3, 1); $$ = newNode("*", $1, $3); printf("\n Regla: termino: termino OP_MULT factor\n");}
-  | termino OP_DIV factor {validateType($1, $3, 1); $$ = newNode("/", $1, $3); printf("\n Regla: termino: termino OP_DIV factor\n");}
+termino: termino OP_MULT factor {validarTipo($1, $3, 1); $$ = newNode("*", $1, $3); printf("\n Regla: termino: termino OP_MULT factor\n");}
+  | termino OP_DIV factor {validarTipo($1, $3, 1); $$ = newNode("/", $1, $3); printf("\n Regla: termino: termino OP_DIV factor\n");}
   | factor {$$ = $1; printf("\n Regla: termino: factor\n");}
   ;
 
@@ -231,49 +232,72 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void validateAsignation(char* id, ast* exp) {
+void asignacionConstante(char* id, ast* exp)
+{
+  symbolNode* treeValueConst = findSymbol(exp->value);
+  symbolNode* treeValueId = findSymbol(id);
+  strcpy(treeValueId->type, treeValueConst->type);
+  strcpy(treeValueId->value, treeValueConst->value);
+}
+
+void validarAsignacion(char* id, ast* exp) 
+{
    symbolNode* symbol = findSymbol(id);
    symbolNode* treeValue = findSymbol(exp->value);
-   if (symbol != NULL && treeValue != NULL) {
-     if((strcmp(symbol->type, "INT") == 0 || strcmp(symbol->type, "FLOAT") == 0) && (strcmp(treeValue->type, "STRING") == 0 || strcmp(treeValue->type, "STRING_C") == 0 )) {
-       fprintf(stderr, "\n Incompatible assignment, line: %d\n", yylineno);
+
+   if(strcmp(symbol->type, "STRING_C") == 0 || strcmp(symbol->type, "INTEGER_C") == 0 || strcmp(symbol->type, "FLOATT_C") == 0)
+   {
+    printf("No se puede volver asignar valor a una constante, linea: %d\n", yylineno);
+    exit(1);
+   }
+
+   if (symbol != NULL && treeValue != NULL) 
+   {
+     if((strcmp(symbol->type, "INT") == 0 || strcmp(symbol->type, "FLOAT") == 0) && (strcmp(treeValue->type, "STRING") == 0 || strcmp(treeValue->type, "STRING_C") == 0 )) 
+     {
+       fprintf(stderr, "\n Asignacion incompatible, linea: %d\n", yylineno);
        exit(1);
      }
 
 
-     if((strcmp(symbol->type, "STRING") == 0) && (strcmp(treeValue->type, "INT") == 0 || strcmp(treeValue->type, "FLOAT") == 0  || strcmp(treeValue->type, "INTEGER_C") == 0 || strcmp(treeValue->type, "FLOAT_C") == 0 )) {
-       fprintf(stderr, "\n Incompatible assignment, line: %d\n", yylineno);
+     if((strcmp(symbol->type, "STRING") == 0) && (strcmp(treeValue->type, "INT") == 0 || strcmp(treeValue->type, "FLOAT") == 0  || strcmp(treeValue->type, "INTEGER_C") == 0 || strcmp(treeValue->type, "FLOAT_C") == 0 )) 
+     {
+       fprintf(stderr, "\n Asignacion incompatible, linea: %d\n", yylineno);
        exit(1);
      }
    }
 }
 
-void validateIdIsDeclared(char* id) {
+void validarDeclaracionId(char* id) 
+{
   symbolNode* symbol = findSymbol(id);
-  if (symbol == NULL || strcmp(symbol->type, "") == 0) {
-    fprintf(stderr, "\nVariable: %s is not declared on the declaration block on line %d\n", id, yylineno);
+  if (symbol == NULL || strcmp(symbol->type, "") == 0) 
+  {
+    fprintf(stderr, "\nVariable: %s no esta declarada en el bloque de declaracion, linea: %d\n", id, yylineno);
     exit(1);
   }
 }
 
-void validateType(ast* left, ast* right, int fail) {
+void validarTipo(ast* left, ast* right, int fail) 
+{
           
-  if(right->value != NULL) {
+  if(right->value != NULL) 
+  {
     symbolNode* symbolLeft = findSymbol(left->value);
     symbolNode* symbolRight = findSymbol(right->value);
-    if(symbolRight != NULL && symbolLeft != NULL) {
+    if(symbolRight != NULL && symbolLeft != NULL) 
+    {
       if(fail == 1 && (
           strcmp(symbolLeft->type, "STRING") == 0 || 
           strcmp(symbolLeft->type, "STRING_C") == 0 ||
           strcmp(symbolRight->type, "STRING") == 0 || 
-          strcmp(symbolRight->type, "STRING_C") == 0)) {
-        fprintf(stderr, "\n Incompatible operation, line: %d\n", yylineno);
-        exit(1); //HAY UN ERROR VER DESPUES CON NUESTRO LOTE DE PRUEBAS.
+          strcmp(symbolRight->type, "STRING_C") == 0)) 
+      {
+        fprintf(stderr, "\n Operacion incompatible, linea: %d\n", yylineno);
+        exit(1);
       }
     }
   }
-
-  
 }
 
 

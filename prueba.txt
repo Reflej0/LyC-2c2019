@@ -13,19 +13,25 @@ var1 = "asd"
 a1 = 1.99
 b1 = 99.2
 
+CONST prueba = "asd"
+
 READ d
-PRINT "5"
+PRINT "6"
+
+IF ( a < (a*3) )
+    IF (a == 5 AND a > c)
+        a = a + 5
+    ENDIF
+ELSE
+   a = a - 5
+ENDIF
 
 IF (NOT((3) > 4))
-	c = 666
+	c = a+b+70
 ENDIF
 
 REPEAT 
-    b = a
+    b = (5 / a - 2) + 1 
 UNTIL (a == 2.3 OR 1==1)
 
-IF ( a < (a*3) )
-    IF (a == b AND a > c)
-        a = a + b
-    ENDIF
-ENDIF
+CONST var2 = 45
