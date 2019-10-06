@@ -160,8 +160,13 @@ comparacion_filter: GUION_BAJO logic_operator  expresion {printf("\n Regla: comp
 filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C {printf("\n Regla: filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C \n");}
   ;
 
-filterlist: filterlist COMA ID {printf("\n Regla: filterlist: filterlist COMA ID \n");}
-      | ID {printf("\n Regla: filterlist: ID \n"); comprobarTipoEnteroFilter = findSymbol($1); if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}}
+filterlist: filterlist COMA ID {printf("\n Regla: filterlist: filterlist COMA ID \n"); 
+      comprobarTipoEnteroFilter = findSymbol($3);
+      if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}
+      strcpy(filterList[0], $3); indexFilter++;}
+      | ID {printf("\n Regla: filterlist: ID \n"); comprobarTipoEnteroFilter = findSymbol($1);
+      if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}
+      strcpy(filterList[0], $1); indexFilter++;}
       ;
 
 print: PRINT ID {validarDeclaracionId($2); $$ = newNode("PRINT", newLeaf($2), NULL); printf("\n Regla: print: PRINT ID \n");}
