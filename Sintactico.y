@@ -149,24 +149,19 @@ asignacion_constante: CONST ID ASIG expresion {asignacionConstante($2, $4); $$ =
 
 iteracion: REPEAT bloque UNTIL P_A condicion P_C {$$ = newNode("REPEAT", $5, $2); printf("\n Regla: iteracion: REPEAT bloque UNTIL P_A condicion P_C \n");};
 
-condicion_filter: comparacion_filter { printf("\n Regla: condicion_filter: comparacion_filter \n");}
-  | comparacion_filter logic_concatenator comparacion_filter {printf("\n Regla: condicion_filter: comparacion_filter logic_concatenator comparacion_filter \n");}
-  | NOT P_A comparacion_filter P_C {printf("\n Regla: condicion_filter: NOT comparacion_filter \n");}
+condicion_filter: comparacion_filter {newNode("CONDICION_FILTER", $1, NULL); printf("\n Regla: condicion_filter: comparacion_filter \n");}
+  | comparacion_filter logic_concatenator comparacion_filter {newNode($2, $1, $3); printf("\n Regla: condicion_filter: comparacion_filter logic_concatenator comparacion_filter \n");}
+  | NOT P_A comparacion_filter P_C {newNode("NOT_CONDICION_FILTER", $3, NULL); printf("\n Regla: condicion_filter: NOT comparacion_filter \n");}
   ;
 
-comparacion_filter: GUION_BAJO logic_operator  expresion {printf("\n Regla: comparacion_filter: expresion  logic_operator  expresion \n");}
+comparacion_filter: GUION_BAJO logic_operator expresion {$$ = newNode($2, $3, NULL); printf("\n Regla: comparacion_filter: expresion  logic_operator  expresion \n");}
   ;
 
-filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C {printf("\n Regla: filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C \n");}
+filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C {$$ = newNode("FILTER", $3, $6); printf("\n Regla: filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C \n");}
   ;
 
-filterlist: filterlist COMA ID {printf("\n Regla: filterlist: filterlist COMA ID \n"); 
-      comprobarTipoEnteroFilter = findSymbol($3);
-      if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}
-      strcpy(filterList[0], $3); indexFilter++;}
-      | ID {printf("\n Regla: filterlist: ID \n"); comprobarTipoEnteroFilter = findSymbol($1);
-      if(strcmp(comprobarTipoEnteroFilter->type, "INT")!=0){printf("El metodo Filter solo acepta variables del tipo INT"); exit(1);}
-      strcpy(filterList[0], $1); indexFilter++;}
+filterlist: filterlist COMA ID {$$ = newNode("FILTERLIST", $1, newLeaf($3)); printf("\n Regla: filterlist: filterlist COMA ID \n");}
+      | ID {$$ = newLeaf($1); printf("\n Regla: filterlist: ID \n");}
       ;
 
 print: PRINT ID {validarDeclaracionId($2); $$ = newNode("PRINT", newLeaf($2), NULL); printf("\n Regla: print: PRINT ID \n");}
@@ -220,21 +215,21 @@ factor: ID {$$ = newLeaf($1); printf("\n Regla: factor: ID \n");}
 
 int main(int argc, char *argv[]) 
 {
-	yyin = fopen(argv[1], "r");
+  yyin = fopen(argv[1], "r");
   yydebug = 0;
   printf("COMENZANDO COMPILACION\n");
   symbolTable = NULL;
-	do 
+  do 
   {
-		yyparse();
-	} 
+    yyparse();
+  } 
   while(!feof(yyin));
   printTable();
   saveTable();
   printf("\n --- INTERMEDIA --- \n");
   ast treeCopy = *tree;
   printAndSaveAST(tree);
-	return 0;
+  return 0;
 }
 
 void asignacionConstante(char* id, ast* exp)
@@ -304,5 +299,3 @@ void validarTipo(ast* left, ast* right, int fail)
     }
   }
 }
-
-

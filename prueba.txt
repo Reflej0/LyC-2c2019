@@ -13,6 +13,8 @@ var1 = "asd"
 a1 = 1.99
 b1 = 99.2
 
+a = a + FILTER (_>(4 + r) and _<=6.5 , [a,b,c,d])
+
 CONST prueba = "asd"
 
 READ d
