@@ -1,0 +1,9 @@
+VAR
+	[FLOAT, INT]:[c1, e1]
+	[STRING, STRING]:[z]
+	[FLOAT, INT, STRING, INT, INT, INT, INT, INT]:[a1, b1, var1, a, b, c, d, r]
+ENDVAR
+
+a = FILTER (_>(4 + r) and _<=6.5 , [a,b,c,d])
+b = FILTER (_>(4 + r), [a,b,c,d])
+c = FILTER (NOT(_>(4 + r)), [a,b,c,d])
