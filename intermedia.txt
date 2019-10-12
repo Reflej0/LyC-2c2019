@@ -1,0 +1,1 @@
+a = d > _4 + r IF _filter = d FILTER c > _4 + r IF _filter = c ; b > _4 + r IF _filter = b ; a > _4 + r IF _filter = a ; 
