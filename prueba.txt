@@ -1,0 +1,39 @@
+VAR
+	[FLOAT, INT]:[c1, e1]
+	[STRING, STRING]:[z]
+	[FLOAT, INT, STRING, INT, INT, INT, INT, INT]:[a1, b1, var1, a, b, c, d, r]
+ENDVAR
+
+--/soy un comentario/--
+
+b = 123
+c = 666
+a = b
+var1 = "asd"
+a1 = 1.99
+b1 = 99.2
+
+a = a + FILTER (_>(4 + r) and _<=6.5 , [a,b,c,d])
+
+CONST prueba = "asd"
+
+READ d
+PRINT "6"
+
+IF ( a < (a*3) )
+    IF (a == 5 AND a > c)
+        a = a + 5
+    ENDIF
+ELSE
+   a = a - 5
+ENDIF
+
+IF (NOT((3) > 4))
+	c = a+b+70
+ENDIF
+
+REPEAT 
+    b = (5 / a - 2) + 1 
+UNTIL (a == 2.3 OR 1==1)
+
+CONST var2 = 45
