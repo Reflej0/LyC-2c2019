@@ -176,6 +176,10 @@ comparacion_filter: GUION_BAJO logic_operator expresion {auxExpFilter = $3; auxL
 
 filter: FILTER P_A condicion_filter COMA C_A filterlist C_C P_C 
 {
+  //Se agrega la variable auxiliar _filter con su tipo _int a la tabla de simbolos.
+  insert("_filter");
+  auxx = findSymbol("_filter");
+  strcpy(auxx->type, "INT");
   //Si el filter es un filter negado, entonces niego el operador de la comparacion.
   if(filterNegado == 1)
   {
@@ -302,7 +306,7 @@ int main(int argc, char *argv[])
   printf("\n --- INTERMEDIA --- \n");
   ast treeCopy = *tree;
   printAndSaveAST(tree);
-  printf("\n\n\n ASSEMBLER HERE \n\n\n");
+  printf("\n\n\n--- ASM EN ARCHIVO final.asm --- \n\n\n");
   generateAssembler(treeCopy);
   return 0;
 }
@@ -352,6 +356,7 @@ void asignacionConstante(char* id, ast* exp)
   symbolNode* treeValueId = findSymbol(id);
   strcpy(treeValueId->type, treeValueConst->type);
   strcpy(treeValueId->value, treeValueConst->value);
+  treeValueId->length = strlen(treeValueConst->value);
 }
 
 void validarAsignacion(char* id, ast* exp) 

@@ -82,6 +82,7 @@ symbolNode* insert(char* value)
     {
         isConstant = 1;
         strcpy(node->type, "FLOATT_C");
+        node->length = strlen(valueToInsert);
 
     } else if (isdigit(valueToInsert[0]) != 0) 
     {

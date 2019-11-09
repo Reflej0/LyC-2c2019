@@ -45,6 +45,7 @@ char* getInstructionFor(char* op);
 char* getRealInstructionFor(char* op);
 void finishAssembler();
 void assemblerRutines();
+char* replace_char(char* str, char find, char replace);
 
 void generateAssembler(ast tree) {
     file = fopen("final.asm", "w");
@@ -95,6 +96,7 @@ void insertSymbolsOnData() {
         }
 
         if (strcmp(current->type, "FLOATT_C") == 0) {
+            replace_char(current->name, '.', '_'); //Fix porque en el ASM no le gusta en data EJ: _2.3 dd 2.3, entonces es _2_3 dd
             fprintf(file,"\t%s dd %s\n", current->name, current->value);
         }
 
@@ -152,9 +154,12 @@ void postOrder(ast* tree) {
     if (strcmp(tree->value, "AND") == 0) {
         char* op = popOperator();
         useSameIfLabel = 1;
-        fprintf(file, "\n\t%s LABEL_IF_%d\n", getInstructionFor(op),ifLabelCount);
-        push(stackForIfs, ifLabelCount);
-        stackCleanup();
+        if(ifLabelCount != 11)
+        {
+            fprintf(file, "\n\t%s LABEL_IF_%d\n", getInstructionFor(op),ifLabelCount);
+            push(stackForIfs, ifLabelCount);
+            stackCleanup();
+        }
     }
 
     if (strcmp(tree->value, "OR") == 0) {
@@ -177,7 +182,7 @@ void postOrder(ast* tree) {
             useSameIfLabel = 0;
         }
         
-        fprintf(file, "\n\t%s LABEL_IF_%d\n", getInstructionFor(op),ifLabelCount);
+        fprintf(file, "\n\t%s LABEL_IF_%d\n", getInstructionFor(op),ifLabelCount); //ACA
         
         if (orWasHere == 1) {
             fprintf(file,"LABEL_IF_%d:\n", pop(stackForIfs));
@@ -203,11 +208,20 @@ void postOrder(ast* tree) {
         fprintf(file,"\nLABEL_REPEAT_OUT_%d:\n", value);
     }
 
-    printf("%s ", tree->value);
+    //printf("%s ", tree->value);
     processNode(tree);
 }
 
 void processNode(ast* tree) {
+    //Fixs ASM.
+    if(strchr(tree->value, '.') != NULL)
+    {
+        replace_char(tree->value, '.', '_'); //Fix porque en el ASM no le gusta en data EJ: _2.3 dd 2.3, entonces es _2_3 dd
+    }
+    if(strcmp(tree->value, "FILTER") == 0)
+    {
+        tree->value = "_filter"; //Fix
+    }
     if (strcmp(tree->value, "=") == 0) {
         fprintf(file,"\n\t; ASIGNACION \n");
         if (strcmp(tree->right->value, "_SUM") != 0 && strcmp(tree->right->value, "_MINUS") != 0 && strcmp(tree->right->value, "_MULTIPLY") != 0 && strcmp(tree->right->value, "_DIVIDE") != 0) {
@@ -321,7 +335,7 @@ void processNode(ast* tree) {
     }
 
     if (strcmp(tree->value, "IF") == 0) {
-        fprintf(file,"LABEL_IF_%d:\n", pop(stackForIfs));
+        fprintf(file,"LABEL_IF_%d:\n", pop(stackForIfs)); //ACA
         ifLabelCount++;
         stackCleanup();
     }
@@ -464,3 +478,12 @@ void assemblerRutines() {
     fprintf(file, "\tret\n");
     fprintf(file, "COPY ENDP\n\n");
 } 
+
+char* replace_char(char* str, char find, char replace){
+    char *current_pos = strchr(str,find);
+    while (current_pos){
+        *current_pos = replace;
+        current_pos = strchr(current_pos,find);
+    }
+    return str;
+}

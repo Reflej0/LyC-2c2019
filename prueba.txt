@@ -9,7 +9,7 @@ ENDVAR
 b = 123
 c = 666
 a = b
-var1 = "asd"
+var1 = "test"
 a1 = 1.99
 b1 = 99.2
 
