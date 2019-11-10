@@ -165,7 +165,6 @@ void postOrder(ast* tree) {
     if (strcmp(tree->value, "OR") == 0) {
         char* op = popOperator();
         useSameIfLabel = 0;
-        //PARCHE: Habria que ver porque op esta null.
         if (!op && strcmp(op, ">=") == 0) {
             fprintf(file, "\n\tJGE LABEL_IF_%d\n", ifLabelCount);
         }
@@ -182,7 +181,7 @@ void postOrder(ast* tree) {
             useSameIfLabel = 0;
         }
         
-        fprintf(file, "\n\t%s LABEL_IF_%d\n", getInstructionFor(op),ifLabelCount); //ACA
+        fprintf(file, "\n\t%s LABEL_IF_%d\n", getInstructionFor(op),ifLabelCount);
         
         if (orWasHere == 1) {
             fprintf(file,"LABEL_IF_%d:\n", pop(stackForIfs));
@@ -194,7 +193,7 @@ void postOrder(ast* tree) {
     if (strcmp(tree->value, "REPEAT") == 0) {
         int value = pop(stackForRepeats);
         char* op = popOperator();
-        if(!op) // PARCHE: Habria que ver porque op esta null.
+        if(!op)
             fprintf(file,"\n\t%s LABEL_REPEAT_OUT_%d\n", getInstructionFor(op), value);
     }
 
@@ -335,7 +334,7 @@ void processNode(ast* tree) {
     }
 
     if (strcmp(tree->value, "IF") == 0) {
-        fprintf(file,"LABEL_IF_%d:\n", pop(stackForIfs)); //ACA
+        fprintf(file,"LABEL_IF_%d:\n", pop(stackForIfs));
         ifLabelCount++;
         stackCleanup();
     }
@@ -410,7 +409,7 @@ char* getInstructionFor(char* op) {
     if (strcmp(op, "!=") == 0) {
             return "JE";
     }
-    return ""; // PARCHE: Solucion temporal, pero en realidad no tendria que estar jaja.
+    return "";
 }
 
 char* getRealInstructionFor(char* op) {
